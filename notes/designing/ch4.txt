@@ -1,0 +1,56 @@
+DDIA Chpt4 Encoding and Evolution:
+- backward and forward compatability
+
+Encoding Data:
+- in memory (objects, structs, lists, arrays, hash tables, etc.)
+- encode sequence of bytes over network
+- encoding usually tied to particular language
+- decoding process needs to instantiate arbitrary classes
+
+JSON, XML, Binary Variants:
+- lots of issues with different types
+- binary encoding
+- messagepack
+
+Thrift and Protocol Buffers:
+- schema for data encoded
+
+BinaryProtocol:
+- type annotation
+- length indication
+
+CompactProtocol:
+- similar to BinaryProtocol
+- pack field and tag number into a single byte with variable-length integers
+
+Field tags and Schema Evolution:
+
+Avro:
+- binary encoding format
+- writer's schema, encode the data using version of schema it knows
+- decode some data and expecting data in some schema, reader's schema
+
+Avro usage:
+- large file with lots of records
+- database with individually written records
+- sending records over a network connection
+- avro is friendlier with dynamically generated schemas
+
+Dataflow:
+
+REST and RPC:
+- client, server
+- explose API service
+- REST vs SOAP
+
+RPC problems:
+- network problems are common
+- timeouts, errors, retries
+
+Message Brokers
+
+
+
+
+
+

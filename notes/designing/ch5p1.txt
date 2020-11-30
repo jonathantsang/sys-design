@@ -1,0 +1,86 @@
+Distributed Data Part 2:
+Chapter 5
+Pages 151 to 167
+
+- replication means keeping a copy of the same data on multiple machines
+reasons to replicate:
+- keep data geographically close to users (reduce latency)
+- allow systems to work even if some parts failed
+- scale out machines to serve read queries
+
+- if data does not change replication is easy
+- if data does change it is difficult
+- three popular algos for replicating changes:
+> single-leader
+> multi-leader
+> leaderless
+
+considerations:
+- async or sync replicaiton
+- how to handle failed replicas
+
+leaders and followers:
+- each node stores a copy of db called a replica
+- leader-based replica
+> one replica is designated the leader
+> other replicas are followers
+> leader writes data and sends data change to followers as part of replication log or change stream
+> writes are only accepted on the leader
+
+Synch vs Asynch Replication:
+- sync waits for ok from follower before making it visible to client
+- asyc does not wait for ok from follower before making it visible to client
+- usually one follower is sync, rest are async > called semi-synchronous
+
+setting up new followers:
+- take snapshot of leader and lock
+- copy snapshot to new follower node
+- get changes since snapshot, leader's replication log
+- catch up to leader
+
+node outage:
+- follower failure: catch up-> last transaction and get rest of changes from leader
+- leader failure: failover
+> other follower needs to be promoted to new leader
+1. determining that the leader has failed (leader does not respond for period of time)
+2. choosing a new leader (election process, usually most up to date node)
+3. reconfigure the system to use the new leader (old leader may come back and need to step down)
+
+replication logs:
+
+statement based replication:
+- log every write request and sends to followers
+- insert, update, delete are forwarded to followers
+- issues like RAND, NOW, depend on existing data, side effects
+
+logical (row-based) log replication:
+- sequence of records describing writes to db tables at granularity of row
+- insert row, log contains new values of all columns
+- delete row, uniquely identify row that was deleted (pimray key, or if no primary key, old values of all columns logged)
+- update row, uniquely identify the updated row
+
+trigger-based replication
+- register custom application code automatically executed on data change
+
+problems with replication lag:
+- if an application reads from an asynchronous follower, it may see out‐ dated information if the follower has fallen behind
+- eventual consistency
+
+reading your own writes:
+- read may get async follower and write may not show up
+- read-after-write consistency
+- is a guarantee that if the user reloads the page, they will always see any updates they submitted themselves. It makes no promises about other users
+
+possible read-after-write techniques:
+- When reading something that the user may have modified, read it from the leader; otherwise, read it from a follower
+- could track the time of the last update and, for one minute after the last update, make all reads from the leader
+- client can remember the timestamp of its most recent write—then the sys‐ tem can ensure that the replica serving any reads for that user reflects updates at least until that timestamp
+- cross-device read-after-write consistency
+
+monotonic reads:
+- lesser guarantee than strong consistency, but a stronger guarantee than eventual consistency
+- achieving monotonic reads is to make sure that each user always makes their reads from the same replica (different users can read from different replicas)
+
+consistent prefix reads:
+- this guarantee says that if a sequence of writes happens in a certain order, then anyone reading those writes will see them appear in the same order
+- make sure that any writes that are causally related to each other are written to the same partition

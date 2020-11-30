@@ -1,0 +1,117 @@
+fb messenger:
+
+functional reqs:
+- support 1 to 1 convo with users
+- check offline/online status
+- persistent storage of chat history
+
+Non-functional Requirements:
+1. Users should have real-time chat experience with minimum latency.
+2. Our system should be highly consistent; users should be able to see the same chat history on all
+their devices.
+3. Messenger’s high availability is desirable; we can tolerate lower availability in the interest of
+consistency.
+
+Extended Requirements:
+- Group Chats: Messenger should support multiple people talking to each other in a group.
+- Push notifications: Messenger should be able to notify users of new messages when they are
+offline.
+
+Capacity:
+- 500 million DAU, 40 messages daily, 20 billion messages a day
+storage:
+Daily: 20 billion * 100 bytes = 2TB
+5 Years: 2TB * 365 * 5 = 3.6PB
+
+2 TB / 86400 sec ~= 25MB/s
+
+High level estimates:
+- Total messages 20 billion per day 
+- Storage for each day 2TB
+- Storage for 5 years 3.6PB 
+- Incomming data 25MB/s
+- Outgoing data 25MB/s
+
+High level design:
+- chat server central piece
+- send message to server, passes to other user and db
+
+a. Message Handling
+- pull model: ask server for new messages
+- push model: keep connection to server and depend on server to notify of new messages
+
+Use push model, so no queue of messages waiting
+- use HTTP long polling or websockets
+- key is userId and value is connection object to keep track of open connections
+
+If server receives message for user who went offline:
+- long poll reconnect eventually
+- store message for a while waiting for receiver to reconnect
+
+- load balancer for userId->server to handle the request
+
+the steps in 'deliver message' request:
+- store message in db
+- send message to receiver
+- send ack to sender
+
+order of messages:
+- timestamp each message when received by the server
+- sequence number ofr every message for each client
+- exact ordering of messages for EACH user
+
+b. Storing and retrieving from db
+- start a separate thread to store in db
+- asynch request to db to store
+
+- use wide-column db like HBase, NoSQL
+- clients should paginate when fetching data from server
+
+c. Managing user's status
+- figure out users's current status from connection object
+
+1. Whenever a client starts the app, it can pull the current status of all users in their friends’ list.
+2. Whenever a user sends a message to another user that has gone offline, we can send a failure to
+the sender and update the status on the client.
+3. Whenever a user comes online, the server can always broadcast that status with a delay of a few
+seconds to see if the user does not go offline immediately.
+4. Client’s can pull the status from the server about those users that are being shown on the user’s
+viewport. This should not be a frequent operation, as the server is broadcasting the online status
+of users and we can live with the stale offline status of users for a while.
+5. Whenever the client starts a new chat with another user, we can pull the status at that time.
+
+Design Summary: 
+- Clients will open a connection to the chat server to send a message; the server will then pass it to the requested user. 
+- All the active users will keep a connection open with the server to receive messages. Whenever a new message arrives, the chat server will push it to the receiving user on the long poll request. 
+- Messages can be stored in HBase, which supports quick small updates, and range based searches. 
+- The servers can broadcast the online status of a user to other relevant users. Clients can pull status updates for users who are visible in the client’s viewport on a less frequent basis.
+
+Data Partitioning:
+- partition on hash of UserId
+
+Cache:
+- recent messages (~15)
+- store all users's messages on one shard, cache should be on one machine
+
+Load Balancing:
+- userId to server
+
+Fault tolerance and Replication:
+- it’s extremely hard to failover TCP connections to other servers; an easier approach can be to have clients automatically reconnect if the connection is lost.
+- store multiple copies of the data on different servers or use techniques like Reed-Solomon encoding to distribute and replicate it.
+
+10 Extended Reqs
+
+a. Group Chat
+- separate group-chat object
+- groupChatId, store people in the chat
+- separate table based on GroupChatId
+
+b. Push notifications
+- send messages to offline users
+- notification server sends to offline user
+
+interesting:
+- push method and polling
+- deliver order client side
+- wide-column db

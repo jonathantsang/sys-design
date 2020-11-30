@@ -1,0 +1,109 @@
+Dropbox:
+
+- highly availability, store it and access from any device
+- reliable and durable, keep multiple copies so nothing is lost
+- scalability: never run out of storage, just another tier above
+
+reqs:
+- upload/download files/photos
+- share with other users
+- synchonize to all devices
+- up to a GB file size
+- ACID (Atomicity, Consistency, Isolation and Durability)
+- offline editing
+
+extended reqs:
+- snapshotting, go back to past version
+
+design considerations:
+- lots of reads and writes (almost equal)
+- files stored as small chunks
+- transfer updated chunks only
+- keep local copy of metadata
+- diffs
+
+capacity estimation and constrations:
+- total users, daily active users, multiple devices, files per user
+
+high level design:
+- file in workspace is uploaded to the cloud
+- we need metadata about files
+- block servers work with clients to upload/download files from cloud storage
+- keep metadaa of files in database
+- synchronization servers notify clients about different changes for synchronization
+
+A. Client:
+- upload/download files
+- detect changes
+- handle conflict due to offline/concurrent updates
+
+> small chunks
+> keep local metadata
+> HTTP long polling > server may not respond immediately > server holds the request open adn waits for response information to become available > new information server immediately sends an HTTP/S response
+
+Client:
+- internal metadata db
+- chunker: split files and reconstruct
+- watcher: watch local changes
+- indexer: communicate with remote synchronization service to broadcast to other clients and update remote metadata db
+
+B. Metadata DB:
+- noSQL, no ACID
+- SQL, ACID, simplicity
+- store: chunks, files, user, devices, workspace
+
+C. Synchronization Service:
+- the most important part of the architecture due to managing metadata nad synchronizing user files
+- when it received an update request it checks with metadata database for consistency and update
+- hash chunks to see if it is updated locally(SHA-256)
+- communication middleware like a queue to balance load
+
+D. Message Queuing Service:
+- aync message based communication between client nad synchronization service
+- message queueing service
+- global request queue for all clients
+- response queue correspond to individual accounts to update client
+
+E. Cloud/Block Storage:
+- store chunks of files uploaded by the users
+
+F. File Processing Workflow
+- message queue for update notifications if clients are offline
+- similar to a github repo so everyone's state is synchronized
+
+8. Data Deduplicaton
+- save space by elimating duplicate copies of data
+- use hash to compare if chunk is there
+a. Post-process deduplication
+- store chunks then process analyzes the data looking for duplication
+- no need to lookup hash calculation before storing (degradation of performance)
+- still store duplicate data for a short time and will consume bandwidth
+b. In-line deduplication
+- calculate hash in real time
+- optimal network and storage
+
+9. Metadata Partitioning
+Vertical Partitioning:
+- one feature, one server ex. user related table, file/chunk tables
+
+Range Based Partitioning:
+- first letter, range based
+- may cause unbalanced servers (too many E, etc.) 
+
+Hash-Based Partitioning:
+- hash object and store
+
+10. Caching
+- hot files/chunks for block storage
+- Memcached 144GB, server can cache 36K chunks
+- LRU for chunks
+
+11. Load Balancer
+- between client and block server
+- between client and metadata server
+- round robin
+- round robin downside won't take server load into consideration
+
+12. Security, Permissions, and File Sharing
+- permissions for each file in file metadata
+

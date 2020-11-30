@@ -4,3 +4,4 @@
 - [Algoexpert System Design](https://www.algoexpert.io/systems/product)
 - [Grokking the System Design Interview](https://www.educative.io/courses/grokking-the-system-design-interview)
 - [Designing Data Intensive Applications](https://www.amazon.com/Designing-Data-Intensive-Applications-Reliable-Maintainable/dp/1449373321) 
+- [The Architecture of Open Source Applications](http://aosabook.org/en/index.html)

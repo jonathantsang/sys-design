@@ -1,0 +1,70 @@
+Grokking (Instagram):
+
+functional reqs:
+- upload/download/view photos
+- search on photo/video titles
+- follow users
+- generate news feed of photos from people they follow
+
+non functional reqs:
+- highly available
+- 200ms news feed generation
+- availability > consistency
+- reliable, photos shouldn't be lost
+
+design considerations:
+- users can upload as many photos as they like, efficient management of storage
+- low latency
+- 100% reliable
+
+HLSD:
+- upload photos
+- view/search photos
+- image storage
+- image metadata
+
+DB Schema:
+
+Photo:
+= userid
+= photopath
+= photolatitude
+= photolongitude
+= userlatitude
+= userlongitude
+
+User:
+= name
+= email
+= dateofbirth
+= creationdate
+= lastlogin
+
+userfollow:
+= userid1
+= userid2
+
+Component Design:
+- write more costly than reads
+- separate the operations
+
+Reliability and Redundancy:
+- store multiple copies
+- multiple replicas of services running
+
+Data Sharding:
+- based on UserId (all user photos on same shard)
+- based on PhotoId (photos are shared based on equally distributed)
+
+Ranking and News Feed Generation:
+- users view news feed top posts
+pre-generating news feed:
+- pull: from server manually or when needed
+- push: push as soon as available to users
+- hybrid: users with high number of follows to pull-based and push for smaller follows
+sharded data news feed creation:
+- epoch date to store photoID and auto-incrementing sequence
+
+Cache and Load Balancing:
+- memecache
+- 80-20 rule, 20% read photos is from 80% traffic

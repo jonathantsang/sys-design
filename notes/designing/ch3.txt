@@ -1,0 +1,53 @@
+DDIA Chapter 3
+- Hash Indexes: key-value offset by byte
+- compaction of segments by key
+
+SSTables and LSM-Trees:
+- merging segments is simple and efficient
+- find a particular key between two elements
+- red-black trees or AVL trees
+
+B-Trees:
+- key-value pairs sorted by key
+- fixed-size blocks or pages
+- read or write one page at a time
+
+Data Warehousing
+
+Optimized for Transaction Processing: (OLTP)
+- typically user facung
+- disk seek time is bottleneck
+
+Optimized for Analytics: (OLAP)
+- business analysts not end users
+- lower volume of queries but more demanding
+- disk bandwidth is often bottleneck
+- column orientated is increasingly popular solution
+- star schema in data warehouse
+- snowflake schema subdimensions
+
+Column-Orientated Storage:
+- don't store all values from one row together, store all values from each column together
+- if column is store in separate file, a query only needs to read nad parse those columns used in the query
+
+Column Compression
+
+Nov 9:
+
+group notes:
+- instagram too easy
+
+eddie's presentation:
+- storage engines for database
+- log structured storage engines
+- page orientated storage engines
+
+log:
+- log append sequence only records
+- key, value
+- hash map
+
+B-tree
+
+LSM-tree
+

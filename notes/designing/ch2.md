@@ -1,0 +1,73 @@
+[[November 1st, 2020]] Systems Design Group Presentation: DDIA Chapter 2
+
+- Data Model: How data is represented at each layer of the system
+    - Representing real-world objects in data structures, APIs, etc.
+    - Representing data structures in general-purpose data model: JSON, relational database, etc.
+    - Representing data in bytes in memory, on disk
+    - Representing bytes in hardware
+- Relational Model vs. Document Model
+    - Relational model
+        - Data is organized into relations (tables in SQL) where each relation is an unordered collection of tuples (rows in SQL)
+        - Limitations
+            - lack greater scalability for very large datasets or high write throughput
+                - [[Question]] What are the scaling limitations of relational databases and why?
+                    - Ease of cache
+            - We want open source and we want it now!!
+            - Specialized query operations that are not well supported by the relational model
+                - [[Question]] Example?
+            - Restrictiveness of relational schema
+                - Note: schema-on-read vs. schema-on-write
+            - Object-relational mismatch
+                - There's an awkward translation layer to map between an object in code and tables, rows and columns in a relational database
+    - Document model
+        - Data is represented in, well, documents.
+        - Note: See Pages 31-32 for example of an LinkedIn profile represented in both
+    - Many-to-one and many-to-many relationships
+        - Normalization: using ID to refer to all instances of the same entry
+            - Consistency across multiple instances
+            - ease of updating
+            - Think about why we use constant variables instead of magic numbers
+        - closely related to joins, but document models usually don't support joins well
+        - scalability: what if we want to add more details to a value?
+        - Note: See page 35 for example
+        - Graph/network model
+            - Most intuitive for many-to-many relationships
+            - CODASYL: a record can have multiple parents, effectively forming a directed graph
+            - The only way of accessing a record was to follow an access path, and this soon becomes a problem of navigating n-dimensional data space. THE HORROR!!
+    - Trade-offs
+        - Simplicity of data structure vs. support for join
+            - i.e. document structure is useful when the data has locality, relational structure has much better support when joins and aggregations are needed
+        - schema-on-read vs. schema-on-write
+            - document gives flexibility, but effectively pushes the schema into code. Relational has rigid schema, but guarantees the data will be in a certain format
+    - THE FUTURE
+        - Convergence of document and relational databases
+            - Traditional relational DBs like PostgreSQL and MySQL now support JSON documents
+            - Document DBs like RethinkDB now support relational-like joins
+- Note: Go through Grokking Systems Design SQL vs. NoSQL section
+    - ACID (details in Chapter 7)
+        - Atomicity
+            - Each transaction is its own unit that cannot be broken down further, even if it includes multiple operations. If one part of the transaction throws an error, the entire transaction is aborted and the DB is restored to its previous state
+        - Consistency
+            - invariants always stay true
+            - e.g. in accounting systems, credits and debits must always be balanced 
+        - Isolation
+            - Concurrent transactions do not affect each other, and the result should be the same as if they were executed serially
+        - Durability
+            - Once a transaction is complete successfully, the data would be persisted (say, written to disk and/or backed up)
+- Query Languages
+    - Imperative vs. declarative
+        - imperative: user specifies steps to perform certain operations
+        - declarative: user specifies criteria for the results
+        - [[Question]] Is the imperative vs. declarative trade-off just another way of saying how much abstraction the API should have?
+            - Query Optimizer
+    - MapReduce
+        - A programming framework (not sure if "framework" here has the same meaning as, say, Python Flask or Pandas or something.)
+        - Input would be transformed into a lot of records
+        - Map function: extracts a key and value for each record
+        - Sort all the key-value pairs by key
+            - [[Question]] How does sorting work in distributed systems?
+        - Reduce: some aggregator function that iterates over the sorted key-value pairs
+        - Functional programming, no modification of input, no side effects
+        - Details on how exactly MapReduce works in distributed systems in Chapter 10
+- Graph-like data models
+    - Neo4j demo
